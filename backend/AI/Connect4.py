@@ -208,7 +208,6 @@ def play(algo_selection):
             break
         
         # Decide AI move
-        game = Connect4(board=game.state)
         algorithm = Alpha_Beta_Pruning.Minimax([game.nodes, game.edges], False)
         ai_move = int(algorithm.path[1][-1])
 

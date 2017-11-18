@@ -1,5 +1,6 @@
 from AI import Connect4 as c4
 
+import requests, numpy
 from flask import Flask
 from flask_restful import Resource, Api
 
@@ -8,7 +9,6 @@ api = Api(app)
 
 # STORAGE
 INFO = {
-    'state': {'turn': 1, 'wait-confirm': 0},
     'board': {'':''},
     'game': None, 
     'human-moves': [],
@@ -19,11 +19,6 @@ INFO = {
 
 class Board(Resource):
     def get(self):
-        return INFO['game']
-
-    def post(self, row):
-        pass
-
 
 class Game(Resource):
     def get(self):
@@ -35,7 +30,6 @@ class Game(Resource):
 
 # ADDS
 # api.add_resource(Resource, urls, endpoint=Resource.__name__.lower())
-api.add_resource(Board, '/board')
 api.add_resource(Game, '/game')
 
 # RUN
