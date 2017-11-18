@@ -9,16 +9,50 @@ api = Api(app)
 
 # STORAGE
 INFO = {
-    'board': {'':''},
+    'state': {'round': 1, 'wait-confirm': 0, 'turn': 'PC'},
     'game': None, 
+    'possible-moves': [],
     'human-moves': [],
     'ai-moves': []
 }
+
+def tryMove(human_move):
+    INFO['possible-moves'] = c4.generate_moves(INFO['game'].state)
+    if not (0 <= human_move <= 6): return 'invalid'
+    elif INFO['possible-moves'] == []: return 'tie'
+    elif human_move not in INFO['possible-moves']: return 'invalid'
+    INFO['game'].state = c4.modify_state(INFO['game'].state, human_move, INFO['game'].human)
+    return True
+
+def findMove():
+    # Decide AI move
+    algorithm = c4.Alpha_Beta_Pruning.Minimax([INFO['game'].nodes, INFO['game'].edges], False)
+    ai_move = int(algorithm.path[1][-1])
+
+    # Apply AI move
+    INFO['game'].state = c4.modify_state(INFO['game'].state, ai_move, INFO['game'].ai)
 
 # CLASSES
 
 class Board(Resource):
     def get(self):
+        return INFO['game'].state.tolist(), 201
+
+    def post(self, move):
+        if(move == 9):
+            INFO['state']['round'] += 1
+            findMove()
+            if INFO['game'].evaluate(INFO['game'].state, INFO['game'].ai, c4.generate_moves(INFO['game'].state) == 0) == c4.constant:
+                return INFO['game'].state.tolist(), 203 # ai win
+            return INFO['game'].state.tolist(), 201
+        else:
+            if(tryMove(move)):
+                INFO['state']['round'] += 1
+                if INFO['game'].evaluate(INFO['game'].state, INFO['game'].human, c4.generate_moves(INFO['game'].state) == 0) == -c4.constant:
+                    return INFO['game'].state.tolist(), 203 # human win
+                return INFO['game'].state.tolist(), 201
+            else:
+                return 'invalid', 201
 
 class Game(Resource):
     def get(self):
@@ -30,6 +64,7 @@ class Game(Resource):
 
 # ADDS
 # api.add_resource(Resource, urls, endpoint=Resource.__name__.lower())
+api.add_resource(Board, '/board/<int:move>')
 api.add_resource(Game, '/game')
 
 # RUN
