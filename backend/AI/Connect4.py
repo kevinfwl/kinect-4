@@ -172,13 +172,14 @@ def notuglyprint(state):
     mapping = {0: '-', -1: 'O', 1: 'X'}
     return np.array([[mapping[char] for char in line] for line in state])
 
+def startGame(algo_selection):
+    return Connect4(board=np.zeros((6,7), dtype=int))
+
 def play(algo_selection):
     game = Connect4(board=np.zeros((6,7), dtype=int))
     print(notuglyprint(game.state))
 
     while True:
-        human_move_values = []
-        ai_move_values = []
         possible_human_moves = generate_moves(game.state)
         try:
             human_move = int(input('Please enter your next move (0-6): '))
@@ -215,11 +216,9 @@ def play(algo_selection):
             break
 
         human_move_value = game.evaluate(game.state, game.human, possible_human_moves == [])
-        human_move_values.append(human_move_value)
         print('Human value:', human_move_value)
 
         ai_move_value = game.evaluate(game.state, game.ai, generate_moves(game.state) == 0)
-        ai_move_values.append(ai_move_value)
         print('AI value:', ai_move_value)
         ai_win_prob = ai_move_value / (ai_move_value + human_move_value)
         print('AI probability of winnning:', ai_win_prob)
