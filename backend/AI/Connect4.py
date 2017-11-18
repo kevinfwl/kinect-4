@@ -3,7 +3,7 @@ import numpy as np
 from collections import Counter
 from copy import deepcopy
 
-from algorithms import MCTS, Alpha_Beta_Pruning
+from algorithms import Alpha_Beta_Pruning
 
 # TODO look into visualizing connect4 board
 
@@ -202,14 +202,9 @@ def play(algo_selection):
             print('HUMAN WON')
             break
 
-        if algo_selection == 'alpha beta pruning':
-            game = Connect4(board=game.state)
-            algorithm = Alpha_Beta_Pruning.Minimax([game.nodes, game.edges], False)
-            ai_move = int(algorithm.path[1][-1])
-        elif algo_selection == 'MCTS':
-            epochs = 1000
-            algorithm = MCTS.search(game.state, epochs)
-            ai_move = algorithm.optimal_next_move
+        game = Connect4(board=game.state)
+        algorithm = Alpha_Beta_Pruning.Minimax([game.nodes, game.edges], False)
+        ai_move = int(algorithm.path[1][-1])
 
         print('AI move:', ai_move)
         game.state = modify_state(game.state, ai_move, game.ai)
