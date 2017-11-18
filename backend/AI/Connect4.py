@@ -181,6 +181,7 @@ def play(algo_selection):
 
     while True:
         possible_human_moves = generate_moves(game.state)
+        # Wait until valid human move is inputted
         try:
             human_move = int(input('Please enter your next move (0-6): '))
         except ValueError:
@@ -195,26 +196,33 @@ def play(algo_selection):
         elif human_move not in possible_human_moves:
             print('Invalid move. Please enter another move')
             continue
+        # Apply valid human move
         game.state = modify_state(game.state, human_move, game.human)
 
+        # Update board
         print(notuglyprint(game.state))
 
+        # End if player wins
         if game.evaluate(game.state, game.human, generate_moves(game.state) == 0) == -constant:
             print('HUMAN WON')
             break
-
+        
+        # Decide AI move
         game = Connect4(board=game.state)
         algorithm = Alpha_Beta_Pruning.Minimax([game.nodes, game.edges], False)
         ai_move = int(algorithm.path[1][-1])
 
+        # Print/Apply AI move
         print('AI move:', ai_move)
         game.state = modify_state(game.state, ai_move, game.ai)
         print(notuglyprint(game.state))
-
+        
+        # Check if AI won
         if game.evaluate(game.state, game.ai, generate_moves(game.state) == 0) == constant:
             print('AI WON')
             break
-
+        
+        # AI stuff
         human_move_value = game.evaluate(game.state, game.human, possible_human_moves == [])
         print('Human value:', human_move_value)
 
