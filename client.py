@@ -5,13 +5,18 @@ TRN = 202
 INV = 203
 WIN = 204
 
-move_count = 0
-moves = [4, 4, 1, 3]
-
 def pretty(arr):
     print('')
     for row in arr:
-        print(row)
+        pr = ''
+        for x in row:
+            if x == 1:
+                pr += 'X, '
+            elif x == 0:
+                pr += '-, '
+            elif x == -1:
+                pr += 'O, '
+        print('[' + pr + ']')
 
 def doTurn(num):
     query = 'http://localhost:5000/board/' + str(num-1)
@@ -38,17 +43,23 @@ def doTurn(num):
         print('pc won')
         return
 
-def play(control):
+def play(control, human_moves):
     put('http://localhost:5000/game')
+    pretty(get('http://localhost:5000/board/1', data={'data':0}).json())
     move_count = 0
     while True:
         if control:
             num = int(input('\nSelect row (1-7): '))
             doTurn(num)
         else:
-            if move_count <= len(moves):
-                num = moves[move_count]
+            if move_count < len(human_moves):
+                num = human_moves[move_count]
+                print('\nSelect row (1-7): ' + str(num))
                 doTurn(num)
                 move_count += 1
+            else:
+                control = True
 
-play(True)
+lose = [1, 1, 7, 7, 2, 6]
+lose2 = [4, 4, 1, 3, 5, 2, 6, 6, 2, 2, 6, 5, 7]
+play(False, lose)
