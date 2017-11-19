@@ -118,11 +118,30 @@ class Game(Resource):
     
     def put(self): # initialize game
         INFO['state'] = {'yellow':21, 'red':21, 'turn': 'yellow', 'ai-chance':0, 'game-over': False, 'cursor': 3}
-        INFO['game'] = c4.startGame('alpha beta pruning')
+        INFO['game'] = convert_grid(c4.startGame('alpha beta pruning'))
         INFO['possible-moves'] = []
         INFO['human-moves'] = []
         INFO['ai-moves'] = []
         return '', RUN
+
+def convert_grid(state):
+    mapping = {0: 0, -1: 1, 1: 2}
+    state = np.array([[mapping[char] for char in line] for line in state])
+
+    print(len(state))
+    for i in range (len(state)):
+        for j in range (len(state[i])):
+            print(j)
+            if j == cursor:
+                print(state[i,j])
+                if turn == 'red':
+                    state[i,j] += 3
+                else:
+                    state[i,j] += 6
+
+    return state
+
+
 
 # ADDS -> api.add_resource(Resource, urls, endpoint=Resource.__name__.lower())
 api.add_resource(Cursor, '/cursor/<string:direction>')
