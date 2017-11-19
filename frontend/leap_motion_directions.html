@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Leap Swiping Directions</title>
+
+  <script>
+  var ws;
+  var paused = false;
+  var pauseOnGesture = true;
+  var focusListener;
+  var blurListener;
+
+  function init() 
+  {
+      ws = new WebSocket("ws://localhost:6437/v6.json");
+
+      ws.onopen = function(event) 
+      {
+          var enableMessage = JSON.stringify({enableGestures: true});
+          ws.send(enableMessage);
+          ws.send(JSON.stringify({focused: true}));
+
+          focusListener = window.addEventListener('focus', function(e) {
+                                 ws.send(JSON.stringify({focused: true}));
+                           });
+
+          blurListener = window.addEventListener('blur', function(e) {
+                                 ws.send(JSON.stringify({focused: false}));
+                           });
+
+          document.getElementById("main").style.visibility = "visible";
+      };
+
+      ws.onmessage = function(event) 
+      {
+          if (!paused) {
+              var obj = JSON.parse(event.data);
+              var gestures_direction = "Try again!";
+
+              if(obj.hasOwnProperty('gestures'))
+              {
+                var obj_gestures = obj['gestures'];
+
+                var tot_horizontal_movement = 0;
+                var tot_vertical_movement = 0;
+
+                for(var i = 0; i < obj_gestures.length; ++i)
+                {
+                  tot_horizontal_movement += obj_gestures[i]['direction'][0];
+                  tot_vertical_movement += obj_gestures[i]['direction'][1];
+                }
+
+                var avg_horizontal_movement = tot_horizontal_movement/obj_gestures.length;
+                var avg_vertical_movement = tot_vertical_movement/obj_gestures.length;
+
+                if(avg_horizontal_movement > 0.6)
+                {
+                  gestures_direction = "right";
+                }
+                else if(avg_horizontal_movement < -0.6)
+                {
+                  gestures_direction = "left";
+                }
+                else if(avg_vertical_movement < -0.6)
+                {
+                  gestures_direction = "down";
+                }
+                else
+                {
+                  gestures_direction = "Try Again!";
+                }
+              }
+
+              document.getElementById("output").innerHTML = '<pre>' + gestures_direction + '</pre>';
+              if (pauseOnGesture  && obj.gestures.length > 0) {
+                togglePause();
+              }
+          }
+      };
+  }
+
+  function togglePause() 
+  {
+    paused = !paused;
+
+    if (paused) 
+    {
+      document.getElementById("pause").innerText = "Resume";
+    } 
+    else 
+    {
+      document.getElementById("pause").innerText = "Pause";
+    }
+  }
+
+  function pauseForGestures() 
+  {
+    if (document.getElementById("pauseOnGesture").checked) 
+    {
+      pauseOnGesture = true;
+    } 
+    else 
+    {
+      pauseOnGesture = false;
+    }
+  }
+
+  </script>
+</head>
+
+<body onload="init();">
+  <button id="pause" onclick="togglePause()">Pause</button>
+
+  <div id="main" style="visibility:hidden">
+    <div id="output"></div>
+  </div>
+</body>
+</html>
