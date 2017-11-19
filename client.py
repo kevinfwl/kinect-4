@@ -5,6 +5,9 @@ TRN = 202
 INV = 203
 WIN = 204
 
+IP = 'https://rnmktizgwr.localtunnel.me'
+#IP = 'http://localhost:5000'
+
 def pretty(arr):
     print('')
     for row in arr:
@@ -19,7 +22,7 @@ def pretty(arr):
         print('[' + pr + ']')
 
 def doTurn(num):
-    query = 'http://localhost:5000/board/' + str(num-1)
+    query = IP + '/board/' + str(num-1)
     human = post(query, data={'data': 0})
     if human.status_code == RUN:
         pretty(human.json())
@@ -27,35 +30,39 @@ def doTurn(num):
         print('not your turn')
     elif human.status_code == INV:
         print('invalid move')
-        return
+        return 'inv'
     elif human.status_code == WIN:
         pretty(human.json())
         print('you won')
-        return
+        return 'win'
     
-    ai = post('http://localhost:5000/board/9', data={'data': 0})
+    ai = post(IP + '/board/9', data={'data': 0})
     if ai.status_code == RUN:
         pretty(ai.json())
     elif ai.status_code == TRN:
         print('not its turn')
     elif ai.status_code == WIN:
-        pretty(ai.json())
+        try:
+            print(ai.json())
+        except:
+            print(ai.text)
         print('pc won')
-        return
+        return 'win'
+    return ''
 
 def play(control, human_moves):
-    put('http://localhost:5000/game')
-    pretty(get('http://localhost:5000/board/1', data={'data':0}).json())
+    put(IP + '/game')
+    pretty(get(IP + '/board/1', data={'data':0}).json())
     move_count = 0
     while True:
         if control:
             num = int(input('\nSelect row (1-7): '))
-            doTurn(num)
+            if doTurn(num) == 'win': break
         else:
             if move_count < len(human_moves):
                 num = human_moves[move_count]
                 print('\nSelect row (1-7): ' + str(num))
-                doTurn(num)
+                if doTurn(num) == 'win': break
                 move_count += 1
             else:
                 control = True
