@@ -10,16 +10,7 @@ IP = 'http://4afdc283.ngrok.io'
 
 def pretty(arr):
     print('')
-    for row in arr:
-        pr = ''
-        for x in row:
-            if x == 1:
-                pr += 'X, '
-            elif x == 0:
-                pr += '-, '
-            elif x == -1:
-                pr += 'O, '
-        print('[' + pr + ']')
+    for row in arr: print(row)
 
 def doTurn(num):
     query = IP + '/board/' + str(num-1)

@@ -1,7 +1,7 @@
 from AI import Connect4 as c4
 
 import os
-import requests, numpy
+import requests, numpy as np
 from flask import Flask
 from flask_restful import Resource, Api
 
@@ -34,9 +34,9 @@ def convert_grid(state):
     for i in range (len(state)):
         for j in range (len(state[i])):
             print(j)
-            if j == cursor:
+            if j == INFO['state']['cursor']:
                 print(state[i,j])
-                if turn == 'red':
+                if INFO['state']['turn'] == 'red':
                     state[i,j] += 3
                 else:
                     state[i,j] += 6
@@ -90,7 +90,15 @@ def endTurn():
 # ->
 class Cursor(Resource):
     def get(self, direction):
-        return INFO['state']['cursor'], RUN
+        if INFO['state']['turn'] == 'yellow':
+            if(tryMove(INFO['state']['cursor'])):
+                endTurn()
+                if INFO['game'].evaluate(INFO['game'].state, INFO['game'].human, c4.generate_moves(INFO['game'].state) == 0) == -c4.constant:
+                    return convert_grid(INFO['game'].state).tolist(), WIN # human won
+                return convert_grid(INFO['game'].state).tolist(), RUN
+            else:
+                return 'invalid', INV
+        return 'AI turn', TRN
 
     def post(self, direction):
         if direction == 'left':
@@ -103,7 +111,7 @@ class Cursor(Resource):
 # -> 
 class Board(Resource):
     def get(self, move): # move number doesn't matter
-        return INFO['game'].state.tolist(), RUN # game board
+        return convert_grid(INFO['game'].state).tolist(), RUN # game board
 
     def post(self, move): # make move
         if not INFO['state']['game-over']:
@@ -115,32 +123,22 @@ class Board(Resource):
                     endTurn()
                     # Check if won
                     if INFO['game'].evaluate(INFO['game'].state, INFO['game'].ai, c4.generate_moves(INFO['game'].state) == 0) == c4.constant:
-                        return INFO['game'].state.tolist(), WIN
+                        return convert_grid(INFO['game'].state).tolist(), WIN
                     # Update info
                     INFO['human-moves'] = INFO['game'].evaluate(INFO['game'].state, INFO['game'].human, INFO['possible-moves'] == [])
                     INFO['ai-moves'] = INFO['game'].evaluate(INFO['game'].state, INFO['game'].ai, c4.generate_moves(INFO['game'].state) == 0)
                     INFO['state']['ai-chance'] = INFO['ai-moves'] / (INFO['ai-moves'] + INFO['human-moves'])
                     # Send board, AI made move but did not win
-                    return INFO['game'].state.tolist(), RUN
+                    return convert_grid(INFO['game'].state).tolist(), RUN
                 return 'PC turn', TRN
-            elif move == -1:
-                if INFO['state']['turn'] == 'yellow':
-                    if(tryMove(INFO['state']['cursor'])):
-                        endTurn()
-                        if INFO['game'].evaluate(INFO['game'].state, INFO['game'].human, c4.generate_moves(INFO['game'].state) == 0) == -c4.constant:
-                            return INFO['game'].state.tolist(), WIN # human won
-                        return INFO['game'].state.tolist(), RUN
-                    else:
-                        return 'invalid', INV
-                return 'AI turn', TRN
             # Player
             else:
                 if INFO['state']['turn'] == 'yellow':
                     if(tryMove(move)):
                         endTurn()
                         if INFO['game'].evaluate(INFO['game'].state, INFO['game'].human, c4.generate_moves(INFO['game'].state) == 0) == -c4.constant:
-                            return INFO['game'].state.tolist(), WIN # human won
-                        return INFO['game'].state.tolist(), RUN
+                            return convert_grid(INFO['game'].state).tolist(), WIN # human won
+                        return convert_grid(INFO['game'].state).tolist(), RUN
                     else:
                         return 'invalid', INV
                 return 'AI turn', TRN
