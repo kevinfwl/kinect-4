@@ -14,6 +14,7 @@ def get_type(x):
     return 'MAX' if x == 1 else 'MIN'
 
 constant = int(10e9)
+empty_placeholder = '-'
 
 def generate_moves(state):
     '''return list of possible moves'''
@@ -169,7 +170,7 @@ class Connect4:
         return value
 
 def notuglyprint(state):
-    mapping = {0: '-', -1: 'O', 1: 'X'}
+    mapping = {0: empty_placeholder, -1: 'O', 1: 'X'}
     return np.array([[mapping[char] for char in line] for line in state])
 
 def startGame(algo_selection):
@@ -208,8 +209,27 @@ def play(algo_selection):
             break
         
         # Decide AI move
+        game = Connect4(board=game.state)
         algorithm = Alpha_Beta_Pruning.Minimax([game.nodes, game.edges], False)
         ai_move = int(algorithm.path[1][-1])
+
+        for move in generate_moves(game.state):
+            temp_game_state = deepcopy(game.state)
+            temp_state = modify_state(temp_game_state, move, game.ai)
+            result = set()
+            for row in temp_state:
+                if check_plausibility(row):
+                    result.add(check_end(indices_of_duplicates(row, game.ai), game.ai))
+            for column in temp_state.transpose():
+                if check_plausibility(column):
+                    result.add(check_end(indices_of_duplicates(column, game.ai), game.ai))
+            for diagonal in get_diagonals(temp_state):
+                if check_plausibility(diagonal):
+                    result.add(check_end(indices_of_duplicates(diagonal, game.ai), game.ai))
+
+            if (constant in result) or (-constant in result) or (len(result) > 0 and generate_moves(temp_state) is None):
+                ai_move = move
+                break
 
         # Print/Apply AI move
         print('AI move:', ai_move)
@@ -229,3 +249,5 @@ def play(algo_selection):
         print('AI value:', ai_move_value)
         ai_win_prob = ai_move_value / (ai_move_value + human_move_value)
         print('AI probability of winnning:', ai_win_prob)
+
+play('alpha_beta_pruning')
