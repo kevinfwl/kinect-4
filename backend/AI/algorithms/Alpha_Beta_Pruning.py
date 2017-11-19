@@ -61,6 +61,7 @@ class Minimax():
                 seen.add(i)
 
         self.path = [i if isinstance(i, int) else i.index for i in self.minimax_path]
+
         print('Path: ', self.path)
         print('\nTraversed (count = {count}) '.format(count=len(self.traversed)))
 
