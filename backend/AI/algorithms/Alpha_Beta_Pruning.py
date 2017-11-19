@@ -77,7 +77,7 @@ class Minimax():
                 return key
 
     def alpha_beta_search(self, node, alpha, beta):
-        if isinstance(node, int):
+        if isinstance(node, int) or isinstance(node, long):
             self.traversed.append(node)
             return node
 
@@ -106,7 +106,7 @@ class Minimax():
     def path_to_root(self, node, root_path):
         if node.type == 'MAX':
             for child in node.children:
-                if isinstance(child, int):
+                if isinstance(child, int) or isinstance(child, long):
                     if child == node.alpha:
                         root_path.append(child)
                 elif child.beta == node.alpha:
@@ -115,7 +115,7 @@ class Minimax():
                     break
         else:
             for child in node.children:
-                if isinstance(child, int):
+                if isinstance(child, int) or isinstance(child, long):
                     if child == node.beta:
                         root_path.append(child)
                 elif child.alpha == node.beta:
