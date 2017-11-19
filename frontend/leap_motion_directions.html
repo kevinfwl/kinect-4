@@ -14,7 +14,7 @@
   {
       ws = new WebSocket("ws://localhost:6437/v6.json");
 
-      ws.onopen = function(event) \\ don't want to mess with this 
+      ws.onopen = function(event) 
       {
           var enableMessage = JSON.stringify({enableGestures: true});
           ws.send(enableMessage);
@@ -90,6 +90,18 @@
     else 
     {
       document.getElementById("pause").innerText = "Pause";
+    }
+  }
+
+  function pauseForGestures() 
+  {
+    if (document.getElementById("pauseOnGesture").checked) 
+    {
+      pauseOnGesture = true;
+    } 
+    else 
+    {
+      pauseOnGesture = false;
     }
   }
 
