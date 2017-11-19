@@ -2,7 +2,10 @@ from AI import Connect4 as c4
 
 import os
 import requests, numpy as np
+from flask import make_response
+from flask.json import jsonify
 from flask import Flask
+from flask import Response
 from flask_restful import Resource, Api
 
 app = Flask(__name__, static_folder='../art')
@@ -24,6 +27,9 @@ INFO = {
     'human-moves': [],
     'ai-moves': []
 }
+
+JSON = {'Access-Control-Allow-Origin': '*', 'Content-Type': 'application/json'}
+TEXT = {'Access-Control-Allow-Origin': '*', 'Content-Type': 'text/plain'}
 
 # FUN(CTIONS)
 # -> Paint grid
@@ -86,19 +92,19 @@ def endTurn():
     INFO['state'][INFO['state']['turn']] -= 1
     INFO['state']['turn'] = 'red' if INFO['state']['turn'] == 'yellow' else 'yellow'
 
-# CLASSES
-# ->
+# CLASSES\
+# -> Snag painted grid / Move cursor
 class Cursor(Resource):
     def get(self, direction):
-        if INFO['state']['turn'] == 'yellow':
-            if(tryMove(INFO['state']['cursor'])):
-                endTurn()
-                if INFO['game'].evaluate(INFO['game'].state, INFO['game'].human, c4.generate_moves(INFO['game'].state) == 0) == -c4.constant:
-                    return convert_grid(INFO['game'].state).tolist(), WIN # human won
-                return convert_grid(INFO['game'].state).tolist(), RUN
-            else:
-                return 'invalid', INV
-        return 'AI turn', TRN
+        if(tryMove(INFO['state']['cursor'])):
+            if INFO['game'].evaluate(INFO['game'].state, INFO['game'].human, c4.generate_moves(INFO['game'].state) == 0) == -c4.constant:
+                resp = make_response(jsonify({'data': convert_grid(INFO['game'].state).tolist()}), WIN, JSON) # human won
+                return resp
+            resp = make_response(jsonify({'data': convert_grid(INFO['game'].state).tolist()}), RUN, JSON)
+            return resp
+        else:
+            resp = make_response(jsonify({'data': 'invalid'}), INV, JSON)
+            return resp
 
     def post(self, direction):
         if direction == 'left':
@@ -111,7 +117,8 @@ class Cursor(Resource):
 # -> 
 class Board(Resource):
     def get(self, move): # move number doesn't matter
-        return convert_grid(INFO['game'].state).tolist(), RUN # game board
+        resp = make_response(jsonify({'data': convert_grid(INFO['game'].state).tolist()}), RUN, JSON) # game board
+        return resp
 
     def post(self, move): # make move
         if not INFO['state']['game-over']:
@@ -123,26 +130,33 @@ class Board(Resource):
                     endTurn()
                     # Check if won
                     if INFO['game'].evaluate(INFO['game'].state, INFO['game'].ai, c4.generate_moves(INFO['game'].state) == 0) == c4.constant:
-                        return convert_grid(INFO['game'].state).tolist(), WIN
+                        resp = make_response(jsonify({'data': convert_grid(INFO['game'].state).tolist()}), WIN, JSON) # AI won
+                        return resp
                     # Update info
                     INFO['human-moves'] = INFO['game'].evaluate(INFO['game'].state, INFO['game'].human, INFO['possible-moves'] == [])
                     INFO['ai-moves'] = INFO['game'].evaluate(INFO['game'].state, INFO['game'].ai, c4.generate_moves(INFO['game'].state) == 0)
                     INFO['state']['ai-chance'] = INFO['ai-moves'] / (INFO['ai-moves'] + INFO['human-moves'])
                     # Send board, AI made move but did not win
-                    return convert_grid(INFO['game'].state).tolist(), RUN
-                return 'PC turn', TRN
+                    resp = make_response(jsonify({'data': convert_grid(INFO['game'].state).tolist()}), RUN, JSON) # game board
+                    return resp
+                resp = make_response(jsonify({'data': 'PC turn'}), TRN, JSON)
+                return resp
             # Player
             else:
                 if INFO['state']['turn'] == 'yellow':
                     if(tryMove(move)):
                         endTurn()
                         if INFO['game'].evaluate(INFO['game'].state, INFO['game'].human, c4.generate_moves(INFO['game'].state) == 0) == -c4.constant:
-                            return convert_grid(INFO['game'].state).tolist(), WIN # human won
-                        return convert_grid(INFO['game'].state).tolist(), RUN
+                            resp = make_response(jsonify({'data': convert_grid(INFO['game'].state).tolist()}), WIN, JSON) # Player won
+                            return resp
                     else:
-                        return 'invalid', INV
+                        resp = make_response(jsonify({'data': 'invalid'}), INV, JSON)
+                        return resp
                 return 'AI turn', TRN
-        return 'Game already over', WIN
+                resp = make_response(jsonify({'data': 'AI turn'}), TRN, JSON)
+                return resp
+        resp = make_response(jsonify({'data': 'Game already over'}), WIN, JSON)
+        return resp
 # -> 
 class Game(Resource):
     def get(self): # grab game info

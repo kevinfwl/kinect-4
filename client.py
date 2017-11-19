@@ -5,7 +5,7 @@ TRN = 202
 INV = 203
 WIN = 204
 
-IP = 'http://4afdc283.ngrok.io'
+IP = 'http://6960384c.ngrok.io'
 #IP = 'http://localhost:5000'
 
 def pretty(arr):
