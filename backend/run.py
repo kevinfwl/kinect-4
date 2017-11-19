@@ -2,6 +2,7 @@ from AI import Connect4 as c4
 
 import os
 import requests, numpy as np
+from copy import deepcopy
 from flask import make_response
 from flask.json import jsonify
 from flask import Flask
@@ -67,21 +68,21 @@ def findMove():
     algorithm = c4.Alpha_Beta_Pruning.Minimax([INFO['game'].nodes, INFO['game'].edges], False)
     ai_move = int(algorithm.path[1][-1])
 
-    for move in generate_moves(game.state):
-        temp_game_state = deepcopy(game.state)
-        temp_state = modify_state(temp_game_state, move, game.ai)
+    for move in c4.generate_moves(INFO['game'].state):
+        temp_game_state = deepcopy(INFO['game'].state)
+        temp_state = c4.modify_state(temp_game_state, move, INFO['game'].ai)
         result = set()
         for row in temp_state:
-            if check_plausibility(row):
-                result.add(check_end(indices_of_duplicates(row, game.ai), game.ai))
+            if c4.check_plausibility(row):
+                result.add(c4.check_end(c4.indices_of_duplicates(row, INFO['game'].ai), INFO['game'].ai))
         for column in temp_state.transpose():
-            if check_plausibility(column):
-                result.add(check_end(indices_of_duplicates(column, game.ai), game.ai))
-        for diagonal in get_diagonals(temp_state):
-            if check_plausibility(diagonal):
-                result.add(check_end(indices_of_duplicates(diagonal, game.ai), game.ai))
+            if c4.check_plausibility(column):
+                result.add(c4.check_end(c4.indices_of_duplicates(column, INFO['game'].ai), INFO['game'].ai))
+        for diagonal in c4.get_diagonals(temp_state):
+            if c4.check_plausibility(diagonal):
+                result.add(c4.check_end(c4.indices_of_duplicates(diagonal, INFO['game'].ai), INFO['game'].ai))
 
-        if (constant in result) or (-constant in result) or (len(result) > 0 and generate_moves(temp_state) is None):
+        if (c4.constant in result) or (-c4.constant in result) or (len(result) > 0 and generate_moves(temp_state) is None):
             ai_move = move
             break
 
@@ -96,24 +97,29 @@ def endTurn():
 # -> Snag painted grid / Move cursor
 class Cursor(Resource):
     def get(self, direction):
-        if(tryMove(INFO['state']['cursor'])):
-            if INFO['game'].evaluate(INFO['game'].state, INFO['game'].human, c4.generate_moves(INFO['game'].state) == 0) == -c4.constant:
-                resp = make_response(jsonify({'data': convert_grid(INFO['game'].state).tolist()}), WIN, JSON) # human won
+        if INFO['state']['turn'] == 'yellow':
+            if(tryMove(INFO['state']['cursor'])):
+                if INFO['game'].evaluate(INFO['game'].state, INFO['game'].human, c4.generate_moves(INFO['game'].state) == 0) == -c4.constant:
+                    resp = make_response(jsonify({'data': convert_grid(INFO['game'].state).tolist()}), WIN, JSON) # human won
+                    return resp
+                resp = make_response(jsonify({'data': convert_grid(INFO['game'].state).tolist()}), RUN, JSON)
+                endTurn()
                 return resp
-            resp = make_response(jsonify({'data': convert_grid(INFO['game'].state).tolist()}), RUN, JSON)
-            return resp
-        else:
-            resp = make_response(jsonify({'data': 'invalid'}), INV, JSON)
-            return resp
+            else:
+                resp = make_response(jsonify({'data': 'invalid'}), INV, JSON)
+                return resp
+        resp = make_response(jsonify({'data': convert_grid(INFO['game'].state).tolist()}), RUN, JSON)
+
 
     def post(self, direction):
-        if direction == 'left':
-            if INFO['state']['cursor'] > 0:
-                INFO['state']['cursor'] -= 1
+        if INFO['state']['turn'] == 'yellow':
+            if direction == 'left':
+                if INFO['state']['cursor'] > 0:
+                   INFO['state']['cursor'] -= 1
 
-        elif direction == 'right':
-            if INFO['state']['cursor'] < 6:
-                INFO['state']['cursor'] += 1
+            elif direction == 'right':
+               if INFO['state']['cursor'] < 6:
+                  INFO['state']['cursor'] += 1
 # -> 
 class Board(Resource):
     def get(self, move): # move number doesn't matter
@@ -127,12 +133,12 @@ class Board(Resource):
                 if INFO['state']['turn'] == 'red':
                     # Do turn
                     findMove()
-                    endTurn()
                     # Check if won
                     if INFO['game'].evaluate(INFO['game'].state, INFO['game'].ai, c4.generate_moves(INFO['game'].state) == 0) == c4.constant:
                         resp = make_response(jsonify({'data': convert_grid(INFO['game'].state).tolist()}), WIN, JSON) # AI won
                         return resp
                     # Update info
+                    endTurn()
                     INFO['human-moves'] = INFO['game'].evaluate(INFO['game'].state, INFO['game'].human, INFO['possible-moves'] == [])
                     INFO['ai-moves'] = INFO['game'].evaluate(INFO['game'].state, INFO['game'].ai, c4.generate_moves(INFO['game'].state) == 0)
                     INFO['state']['ai-chance'] = INFO['ai-moves'] / (INFO['ai-moves'] + INFO['human-moves'])
@@ -145,10 +151,10 @@ class Board(Resource):
             else:
                 if INFO['state']['turn'] == 'yellow':
                     if(tryMove(move)):
-                        endTurn()
                         if INFO['game'].evaluate(INFO['game'].state, INFO['game'].human, c4.generate_moves(INFO['game'].state) == 0) == -c4.constant:
                             resp = make_response(jsonify({'data': convert_grid(INFO['game'].state).tolist()}), WIN, JSON) # Player won
                             return resp
+                        endTurn()
                     else:
                         resp = make_response(jsonify({'data': 'invalid'}), INV, JSON)
                         return resp
