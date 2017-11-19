@@ -152,7 +152,7 @@ class Game(Resource):
     
     def put(self): # initialize game
         INFO['state'] = {'yellow':21, 'red':21, 'turn': 'yellow', 'ai-chance':0, 'game-over': False, 'cursor': 3}
-        INFO['game'] = convert_grid(c4.startGame('alpha beta pruning'))
+        INFO['game'] = c4.startGame('alpha beta pruning')
         INFO['possible-moves'] = []
         INFO['human-moves'] = []
         INFO['ai-moves'] = []
