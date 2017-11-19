@@ -82,7 +82,7 @@ def findMove():
             if c4.check_plausibility(diagonal):
                 result.add(c4.check_end(c4.indices_of_duplicates(diagonal, INFO['game'].ai), INFO['game'].ai))
 
-        if (c4.constant in result) or (-c4.constant in result) or (len(result) > 0 and generate_moves(temp_state) is None):
+        if (c4.constant in result) or (-c4.constant in result) or (len(result) > 0 and c4.generate_moves(temp_state) is None):
             ai_move = move
             break
 
@@ -98,28 +98,26 @@ def endTurn():
 class Cursor(Resource):
     def get(self, direction):
         if INFO['state']['turn'] == 'yellow':
-            if(tryMove(INFO['state']['cursor'])):
-                if INFO['game'].evaluate(INFO['game'].state, INFO['game'].human, c4.generate_moves(INFO['game'].state) == 0) == -c4.constant:
-                    resp = make_response(jsonify({'data': convert_grid(INFO['game'].state).tolist()}), WIN, JSON) # human won
+            if direction == 'down':
+                if(tryMove(INFO['state']['cursor'])):
+                    if INFO['game'].evaluate(INFO['game'].state, INFO['game'].human, c4.generate_moves(INFO['game'].state) == 0) == -c4.constant:
+                        resp = make_response(jsonify({'data': convert_grid(INFO['game'].state).tolist()}), WIN, JSON) # human won
+                        return resp
+                    resp = make_response(jsonify({'data': convert_grid(INFO['game'].state).tolist()}), RUN, JSON)
+                    endTurn()
                     return resp
-                resp = make_response(jsonify({'data': convert_grid(INFO['game'].state).tolist()}), RUN, JSON)
-                endTurn()
-                return resp
-            else:
-                resp = make_response(jsonify({'data': 'invalid'}), INV, JSON)
-                return resp
-        resp = make_response(jsonify({'data': convert_grid(INFO['game'].state).tolist()}), RUN, JSON)
-
-
-    def post(self, direction):
-        if INFO['state']['turn'] == 'yellow':
-            if direction == 'left':
+                else:
+                    resp = make_response(jsonify({'data': 'invalid'}), INV, JSON)
+                    return resp
+            elif direction == 'left':
                 if INFO['state']['cursor'] > 0:
                    INFO['state']['cursor'] -= 1
-
             elif direction == 'right':
                if INFO['state']['cursor'] < 6:
                   INFO['state']['cursor'] += 1
+        resp = make_response(jsonify({'data': convert_grid(INFO['game'].state).tolist()}), INV, JSON)
+        return resp
+            
 # -> 
 class Board(Resource):
     def get(self, move): # move number doesn't matter
