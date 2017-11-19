@@ -60,6 +60,25 @@ def findMove():
     INFO['game'] = c4.Connect4(board=INFO['game'].state)
     algorithm = c4.Alpha_Beta_Pruning.Minimax([INFO['game'].nodes, INFO['game'].edges], False)
     ai_move = int(algorithm.path[1][-1])
+
+    for move in generate_moves(game.state):
+        temp_game_state = deepcopy(game.state)
+        temp_state = modify_state(temp_game_state, move, game.ai)
+        result = set()
+        for row in temp_state:
+            if check_plausibility(row):
+                result.add(check_end(indices_of_duplicates(row, game.ai), game.ai))
+        for column in temp_state.transpose():
+            if check_plausibility(column):
+                result.add(check_end(indices_of_duplicates(column, game.ai), game.ai))
+        for diagonal in get_diagonals(temp_state):
+            if check_plausibility(diagonal):
+                result.add(check_end(indices_of_duplicates(diagonal, game.ai), game.ai))
+
+        if (constant in result) or (-constant in result) or (len(result) > 0 and generate_moves(temp_state) is None):
+            ai_move = move
+            break
+
     # Apply
     INFO['game'].state = c4.modify_state(INFO['game'].state, ai_move, INFO['game'].ai)
 # -> update state to reflect 
