@@ -26,6 +26,21 @@ INFO = {
 }
 
 # FUN(CTIONS)
+# -> Paint grid
+def convert_grid(state):
+    mapping = {0: 0, -1: 1, 1: 2}
+    state = np.array([[mapping[char] for char in line] for line in state])
+    print(len(state))
+    for i in range (len(state)):
+        for j in range (len(state[i])):
+            print(j)
+            if j == cursor:
+                print(state[i,j])
+                if turn == 'red':
+                    state[i,j] += 3
+                else:
+                    state[i,j] += 6
+    return state
 # -> Do a player move if it is valid
 def tryMove(human_move):
     # retrieve possible moves
@@ -123,25 +138,6 @@ class Game(Resource):
         INFO['human-moves'] = []
         INFO['ai-moves'] = []
         return '', RUN
-
-def convert_grid(state):
-    mapping = {0: 0, -1: 1, 1: 2}
-    state = np.array([[mapping[char] for char in line] for line in state])
-
-    print(len(state))
-    for i in range (len(state)):
-        for j in range (len(state[i])):
-            print(j)
-            if j == cursor:
-                print(state[i,j])
-                if turn == 'red':
-                    state[i,j] += 3
-                else:
-                    state[i,j] += 6
-
-    return state
-
-
 
 # ADDS -> api.add_resource(Resource, urls, endpoint=Resource.__name__.lower())
 api.add_resource(Cursor, '/cursor/<string:direction>')
