@@ -1,10 +1,11 @@
 from AI import Connect4 as c4
 
+import os
 import requests, numpy
 from flask import Flask
 from flask_restful import Resource, Api
 
-app = Flask(__name__)
+app = Flask(__name__, static_folder='../art')
 api = Api(app)
 
 # CONSTANTS
@@ -13,9 +14,11 @@ TRN = 202
 INV = 203
 WIN = 204
 
+PORT = 5000
+
 # STORAGE
 INFO = {
-    'state': {'black':21, 'red':21, 'turn': 'red', 'ai-chance':0, 'game-over': False, 'wait-confirm': 0},
+    'state': {'yellow':21, 'red':21, 'turn': 'yellow', 'ai-chance':0, 'game-over': False, 'cursor': 3},
     'game': c4.startGame('alpha beta pruning'), 
     'possible-moves': [],
     'human-moves': [],
@@ -47,9 +50,22 @@ def findMove():
 # -> update state to reflect 
 def endTurn():
     INFO['state'][INFO['state']['turn']] -= 1
-    INFO['state']['turn'] = 'red' if INFO['state']['turn'] == 'black' else 'black'
+    INFO['state']['turn'] = 'red' if INFO['state']['turn'] == 'yellow' else 'yellow'
 
 # CLASSES
+# ->
+class Cursor(Resource):
+    def get(self, direction):
+        return INFO['state']['cursor'], RUN
+
+    def post(self, direction):
+        if direction == 'left':
+            if INFO['state']['cursor'] > 0:
+                INFO['state']['cursor'] -= 1
+
+        elif direction == 'right':
+            if INFO['state']['cursor'] < 6:
+                INFO['state']['cursor'] += 1
 # -> 
 class Board(Resource):
     def get(self, move): # move number doesn't matter
@@ -57,19 +73,35 @@ class Board(Resource):
 
     def post(self, move): # make move
         if not INFO['state']['game-over']:
-            if move == 9: # AI
-                if INFO['state']['turn'] == 'black':
+            # AI
+            if move == 9:
+                if INFO['state']['turn'] == 'red':
+                    # Do turn
                     findMove()
                     endTurn()
+                    # Check if won
                     if INFO['game'].evaluate(INFO['game'].state, INFO['game'].ai, c4.generate_moves(INFO['game'].state) == 0) == c4.constant:
-                        return INFO['game'].state.tolist(), WIN # ai won
+                        return INFO['game'].state.tolist(), WIN
+                    # Update info
                     INFO['human-moves'] = INFO['game'].evaluate(INFO['game'].state, INFO['game'].human, INFO['possible-moves'] == [])
                     INFO['ai-moves'] = INFO['game'].evaluate(INFO['game'].state, INFO['game'].ai, c4.generate_moves(INFO['game'].state) == 0)
                     INFO['state']['ai-chance'] = INFO['ai-moves'] / (INFO['ai-moves'] + INFO['human-moves'])
+                    # Send board, AI made move but did not win
                     return INFO['game'].state.tolist(), RUN
                 return 'PC turn', TRN
-            else: # Player
-                if INFO['state']['turn'] == 'red':
+            elif move == -1:
+                if INFO['state']['turn'] == 'yellow':
+                    if(tryMove(INFO['state']['cursor'])):
+                        endTurn()
+                        if INFO['game'].evaluate(INFO['game'].state, INFO['game'].human, c4.generate_moves(INFO['game'].state) == 0) == -c4.constant:
+                            return INFO['game'].state.tolist(), WIN # human won
+                        return INFO['game'].state.tolist(), RUN
+                    else:
+                        return 'invalid', INV
+                return 'AI turn', TRN
+            # Player
+            else:
+                if INFO['state']['turn'] == 'yellow':
                     if(tryMove(move)):
                         endTurn()
                         if INFO['game'].evaluate(INFO['game'].state, INFO['game'].human, c4.generate_moves(INFO['game'].state) == 0) == -c4.constant:
@@ -85,7 +117,7 @@ class Game(Resource):
         return INFO['state']
     
     def put(self): # initialize game
-        INFO['state'] = {'black':21, 'red':21, 'turn': 'red', 'ai-chance':0, 'game-over': False, 'wait-confirm': 0}
+        INFO['state'] = {'yellow':21, 'red':21, 'turn': 'yellow', 'ai-chance':0, 'game-over': False, 'cursor': 3}
         INFO['game'] = c4.startGame('alpha beta pruning')
         INFO['possible-moves'] = []
         INFO['human-moves'] = []
@@ -93,9 +125,10 @@ class Game(Resource):
         return '', RUN
 
 # ADDS -> api.add_resource(Resource, urls, endpoint=Resource.__name__.lower())
+api.add_resource(Cursor, '/cursor/<string:direction>')
 api.add_resource(Board, '/board/<int:move>')
 api.add_resource(Game, '/game')
 
 # RUN
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(debug=True, host='0.0.0.0', port=PORT)
