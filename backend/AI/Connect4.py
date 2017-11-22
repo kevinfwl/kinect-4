@@ -249,5 +249,3 @@ def play(algo_selection):
         print('AI value:', ai_move_value)
         ai_win_prob = ai_move_value / (ai_move_value + human_move_value)
         print('AI probability of winnning:', ai_win_prob)
-
-play('alpha_beta_pruning')
