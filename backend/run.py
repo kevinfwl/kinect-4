@@ -17,7 +17,7 @@ RUN = 201
 TRN = 202
 INV = 203
 WIN = 204
-
+ 
 PORT = 5000
 
 # STORAGE
@@ -100,7 +100,7 @@ class Cursor(Resource):
         if INFO['state']['turn'] == 'yellow':
             if direction == 'down':
                 if(tryMove(INFO['state']['cursor'])):
-                    if INFO['game'].evaluate(INFO['game'].state, INFO['game'].human, c4.generate_moves(INFO['game'].state) == 0) == -c4.constant:
+                    if INFO['game'].evaluate(INFO['game'].state, INFO['game'].human, c4.generate_moves(INFO['game'].state) == 0) == c4.constant:
                         resp = make_response(jsonify({'data': convert_grid(INFO['game'].state).tolist()}), WIN, JSON) # human won
                         return resp
                     resp = make_response(jsonify({'data': convert_grid(INFO['game'].state).tolist()}), RUN, JSON)
@@ -117,7 +117,6 @@ class Cursor(Resource):
                   INFO['state']['cursor'] += 1
         resp = make_response(jsonify({'data': convert_grid(INFO['game'].state).tolist()}), INV, JSON)
         return resp
-            
 # -> 
 class Board(Resource):
     def get(self, move): # move number doesn't matter
@@ -132,7 +131,7 @@ class Board(Resource):
                     # Do turn
                     findMove()
                     # Check if won
-                    if INFO['game'].evaluate(INFO['game'].state, INFO['game'].ai, c4.generate_moves(INFO['game'].state) == 0) == c4.constant:
+                    if INFO['game'].evaluate(INFO['game'].state, INFO['game'].ai, c4.generate_moves(INFO['game'].state) == 0) == -c4.constant:
                         resp = make_response(jsonify({'data': convert_grid(INFO['game'].state).tolist()}), WIN, JSON) # AI won
                         return resp
                     # Update info
@@ -149,7 +148,7 @@ class Board(Resource):
             else:
                 if INFO['state']['turn'] == 'yellow':
                     if(tryMove(move)):
-                        if INFO['game'].evaluate(INFO['game'].state, INFO['game'].human, c4.generate_moves(INFO['game'].state) == 0) == -c4.constant:
+                        if INFO['game'].evaluate(INFO['game'].state, INFO['game'].human, c4.generate_moves(INFO['game'].state) == 0) == c4.constant:
                             resp = make_response(jsonify({'data': convert_grid(INFO['game'].state).tolist()}), WIN, JSON) # Player won
                             return resp
                         endTurn()
